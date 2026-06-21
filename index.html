@@ -138,7 +138,13 @@
     gap: 16px;
   }
 
-  .rules-btn {
+  .header-btns {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .header-btn {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -157,11 +163,16 @@
     line-height: 1;
   }
 
-  .rules-btn:hover {
+  .header-btn:hover {
     border-color: var(--coral);
     color: var(--coral);
     background: rgba(255,94,91,0.04);
     transform: rotate(6deg);
+  }
+
+  .principle-btn {
+    font-size: 18px;
+    font-style: normal;
   }
 
   h1 {
@@ -749,7 +760,10 @@
         <h1><span class="accent">325</span> 数字拼图</h1>
         <p class="subtitle">用 3 → 2 → 5 的循环，拼出任意数字</p>
       </div>
-      <button class="rules-btn" id="rulesBtn" title="游戏规则">?</button>
+      <div class="header-btns">
+        <button class="header-btn" id="rulesBtn" title="游戏规则">?</button>
+        <button class="header-btn principle-btn" id="principleBtn" title="计算原理">&#9881;</button>
+      </div>
     </div>
   </div>
 
@@ -833,6 +847,64 @@
         <h3><span class="rule-num">05</span> 限制</h3>
         <p>最多尝试 <strong>6 组</strong>（18 个数字）。超出此范围若仍未找到解，则判定为"无法构成"。</p>
         <p>支持负数目标。计算使用精确有理数，不会有浮点误差。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Principles Modal -->
+<div class="modal-overlay" id="principleModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h2>计算原理</h2>
+      <button class="modal-close" id="principleClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="rule-section">
+        <h3><span class="rule-num">01</span> 精确有理数引擎</h3>
+        <p>所有运算基于 <strong>BigInt 分子 / 分母</strong> 的精确有理数（<code>Fraction</code> 类），不做浮点计算。每次加减乘除后立即以 GCD 约分至最简形式。</p>
+        <p>浮点误差会导致 <code>0.1 + 0.2 ≠ 0.3</code> 之类的问题，使目标值的精确匹配彻底失效，因此有理数运算是非妥协的设计前提。</p>
+      </div>
+
+      <div class="rule-section">
+        <h3><span class="rule-num">02</span> DP 矩阵链</h3>
+        <p>对 N 组数字序列 <code>[3,2,5,3,2,5,…]</code>（长度 3N），定义 <code>dp[i][j]</code> 为从位置 i 到 j 的子序列所能算出的所有值（及其表达式）。</p>
+        <p><strong>Base 层</strong>：单个数字只能是 3、2 或 5。</p>
+        <p><strong>递推</strong>：区间长度 L ≥ 2 时，选取切分点 k（i ≤ k &lt; j），将左区间 <code>dp[i][k]</code> 的每个值与右区间 <code>dp[k+1][j]</code> 的每个值进行四则运算组合。除法时跳过右边为零的情况。</p>
+        <p>任一合法的表达式二叉树，总能在其根节点处一分为二，因此 DP 穷举了所有可能的括号结构和运算符放置。</p>
+      </div>
+
+      <div class="rule-section">
+        <h3><span class="rule-num">03</span> 数字拼接</h3>
+        <p>同一组内的相邻数字可拼接为多位数：<code>32</code>（3 和 2）、<code>25</code>（2 和 5）、<code>325</code>（全部三个）。拼接仅允许在同一组内发生，不跨越组边界。拼接结果作为叶子节点参与后续运算。</p>
+      </div>
+
+      <div class="rule-section">
+        <h3><span class="rule-num">04</span> 三层剪枝</h3>
+        <table class="rule-table">
+          <tr><td>量级分桶</td><td>按绝对值大小分为 8 个桶（0、(0,1)、[1,10)、…、[10⁵,∞)），≥ 1 万的大值桶不限量保留（天然稀疏），其余桶保留 400 条</td></tr>
+          <tr><td>桶内排序</td><td>每桶按简洁度 <code>|分子| + 分母</code> 升序排列，保留最简洁的值</td></tr>
+          <tr><td>目标钉固</td><td>当前搜索的目标值在修剪后强制回插，确保不被误删</td></tr>
+          <tr><td>小边全量</td><td>切分组合时，若左侧或右侧 ≤ 50 条，则两边全量组合（因为 50 × N 很便宜），避免采样子集遗漏关键步骤</td></tr>
+        </table>
+      </div>
+
+      <div class="rule-section">
+        <h3><span class="rule-num">05</span> 表达式格式化</h3>
+        <p>DP 每个条目除存储值以外，还存储 <code>{expr, topOp}</code>。合并两条子表达式时，根据运算符优先级自动判断是否添加括号：</p>
+        <p>• 左操作数需要括号：leftPrec &gt; 0 且 leftPrec &lt; curPrec</p>
+        <p>• 右操作数需要括号：rightPrec &lt; curPrec，或同优先级且当前运算符为 <code>−</code> 或 <code>÷</code></p>
+        <p>输出采用 <code>×</code> <code>÷</code> 替代 <code>*</code> <code>/</code>，呈现为标准数学表达式。</p>
+      </div>
+
+      <div class="rule-section">
+        <h3><span class="rule-num">06</span> 外层调度</h3>
+        <p>从 N=1 开始递增组数，每次构建完整的 DP 表后检查 <code>dp[0][3N−1]</code> 是否命中目标。找到即停止，无需计算更大 N。每组之间 <code>await sleep(20ms)</code> 让浏览器刷新 UI，避免长任务冻结页面。上限 6 组（18 个数字）。</p>
+      </div>
+
+      <div class="rule-section">
+        <h3><span class="rule-num">07</span> 时间复杂度</h3>
+        <p>N 组有 3N 个数字，DP 表共 O(N²) 个区间。每个区间枚举 O(N) 个切分点，每个切分组合 O(V²) 条值（V ≤ 剪枝上限）。单组复杂度 O(N³·V²)，实际运行 N ≤ 4 时在 2~8 秒内完成，N=5 约 30~60 秒。</p>
       </div>
     </div>
   </div>
@@ -1299,17 +1371,25 @@ targetInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') handleCalculate();
 });
 
-// Rules modal
-const rulesBtn = document.getElementById('rulesBtn');
-const rulesModal = document.getElementById('rulesModal');
-const modalClose = document.getElementById('modalClose');
-rulesBtn.addEventListener('click', () => rulesModal.classList.add('open'));
-modalClose.addEventListener('click', () => rulesModal.classList.remove('open'));
-rulesModal.addEventListener('click', (e) => {
-  if (e.target === rulesModal) rulesModal.classList.remove('open');
-});
+// Modals
+function setupModal(btnId, modalId, closeId) {
+  const btn = document.getElementById(btnId);
+  const modal = document.getElementById(modalId);
+  const close = document.getElementById(closeId);
+  btn.addEventListener('click', () => modal.classList.add('open'));
+  close.addEventListener('click', () => modal.classList.remove('open'));
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.remove('open');
+  });
+  return modal;
+}
+const rulesModal = setupModal('rulesBtn', 'rulesModal', 'modalClose');
+const principleModal = setupModal('principleBtn', 'principleModal', 'principleClose');
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && rulesModal.classList.contains('open')) rulesModal.classList.remove('open');
+  if (e.key === 'Escape') {
+    if (rulesModal.classList.contains('open')) rulesModal.classList.remove('open');
+    if (principleModal.classList.contains('open')) principleModal.classList.remove('open');
+  }
 });
 
 console.log('325 Puzzle ready. Try: 4290');
