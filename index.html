@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>325 数字拼图</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #fefaf3;
+    --paper: #fffdf7;
+    --card: #ffffff;
+    --ink: #1a1a2e;
+    --ink-dim: #6b6b7b;
+    --ink-faint: #b0b0bc;
+    --coral: #ff5e5b;
+    --coral-glow: #ff7b79;
+    --sunflower: #f7b731;
+    --sunflower-light: #ffeaa7;
+    --mint: #20bf6b;
+    --mint-light: #d3f9e2;
+    --sky: #4dabf7;
+    --sky-light: #d0ebff;
+    --border: #e8e4db;
+    --border-focus: #ff5e5b;
+    --success: #20bf6b;
+    --fail: #ff5e5b;
+    --radius: 0px;
+    --font-display: "DM Serif Display", "Noto Serif SC", Georgia, serif;
+    --font-body: "Noto Sans SC", -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    background: linear-gradient(180deg, #fefaf3 0%, #fff8ed 40%, #fef5e7 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 32px 20px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Sunlight gradient overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 800px 600px at 20% 0%, rgba(255,94,91,0.04) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 500px at 80% 30%, rgba(247,183,49,0.05) 0%, transparent 70%),
+      radial-gradient(ellipse 700px 400px at 50% 100%, rgba(77,171,247,0.03) 0%, transparent 70%);
+  }
+
+  /* Floating math glyphs — warm and subtle */
+  .bg-glyphs {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .bg-glyph {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: clamp(40px, 8vw, 120px);
+    font-weight: 700;
+    color: rgba(0,0,0,0.018);
+    user-select: none;
+    animation: floatGlyph 20s infinite linear;
+  }
+
+  .bg-glyph:nth-child(1) { top: 5%; left: 3%; animation-delay: 0s; font-size: 100px; }
+  .bg-glyph:nth-child(2) { top: 15%; right: 8%; animation-delay: -4s; font-size: 80px; }
+  .bg-glyph:nth-child(3) { top: 55%; left: 5%; animation-delay: -8s; font-size: 110px; }
+  .bg-glyph:nth-child(4) { top: 70%; right: 5%; animation-delay: -12s; font-size: 70px; }
+  .bg-glyph:nth-child(5) { top: 35%; left: 85%; animation-delay: -16s; font-size: 90px; }
+  .bg-glyph:nth-child(6) { top: 85%; left: 40%; animation-delay: -2s; font-size: 60px; }
+
+  @keyframes floatGlyph {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0.018; }
+    25% { transform: translateY(-30px) rotate(2deg); opacity: 0.035; }
+    50% { transform: translateY(10px) rotate(-1deg); opacity: 0.018; }
+    75% { transform: translateY(-20px) rotate(1deg); opacity: 0.03; }
+    100% { transform: translateY(0) rotate(0deg); opacity: 0.018; }
+  }
+
+  /* Main card */
+  .card {
+    position: relative;
+    z-index: 1;
+    background: var(--card);
+    padding: 0;
+    width: 100%;
+    max-width: 680px;
+    margin-top: 30px;
+    border: 1px solid var(--border);
+    box-shadow:
+      0 1px 2px rgba(0,0,0,0.03),
+      0 4px 16px rgba(0,0,0,0.04),
+      0 12px 40px rgba(0,0,0,0.06);
+    border-radius: 4px;
+  }
+
+  /* Card header */
+  .card-header {
+    padding: 36px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    background: linear-gradient(180deg, rgba(255,94,91,0.02) 0%, transparent 100%);
+  }
+
+  .card-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 40px;
+    width: 56px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--coral), var(--sunflower));
+    border-radius: 0 2px 0 0;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 42px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    line-height: 1.15;
+    margin-bottom: 6px;
+    font-style: italic;
+  }
+
+  h1 .accent {
+    color: var(--coral);
+    font-style: normal;
+    font-weight: 400;
+  }
+
+  .subtitle {
+    color: var(--ink-dim);
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+
+  /* Digit badges */
+  .digit-badges {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    padding: 28px 40px;
+    flex-wrap: wrap;
+  }
+
+  .digit-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 68px;
+    font-family: var(--font-display);
+    font-size: 38px;
+    font-weight: 400;
+    font-style: italic;
+    color: #fff;
+    position: relative;
+    margin: 0 1px;
+    transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: default;
+    user-select: none;
+    border-radius: 3px;
+  }
+
+  .digit-badge::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    z-index: 0;
+    border-radius: 2px;
+    transform: skewY(-1.5deg);
+    transition: transform 0.3s ease;
+  }
+
+  .digit-badge:hover {
+    transform: translateY(-4px);
+  }
+
+  .digit-badge:hover::before {
+    transform: skewY(0deg) scale(1.06);
+  }
+
+  .digit-badge.d3::before { background: linear-gradient(135deg, #ff5e5b, #ff8785); }
+  .digit-badge.d2::before { background: linear-gradient(135deg, #f7b731, #fcc419); }
+  .digit-badge.d5::before { background: linear-gradient(135deg, #20bf6b, #51cf66); }
+
+  .digit-badge span {
+    position: relative;
+    z-index: 1;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  .digit-badge.faded {
+    opacity: 0.12;
+    filter: grayscale(0.5);
+  }
+  .digit-badge.faded:hover {
+    opacity: 0.25;
+    transform: translateY(-2px);
+  }
+
+  /* Input */
+  .input-section {
+    padding: 20px 40px 24px;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    background: #fdfdf9;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .input-row:focus-within {
+    border-color: var(--coral);
+    box-shadow: 0 0 0 4px rgba(255,94,91,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  }
+
+  .input-row input {
+    flex: 1;
+    padding: 15px 20px;
+    font-size: 22px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    letter-spacing: 0.03em;
+    min-width: 0;
+  }
+
+  .input-row input::placeholder {
+    color: var(--ink-faint);
+    font-weight: 400;
+  }
+
+  .input-row input:disabled {
+    opacity: 0.35;
+    background: rgba(0,0,0,0.01);
+  }
+
+  .input-row button {
+    padding: 15px 30px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-body);
+    letter-spacing: 0.06em;
+    border: none;
+    border-left: 2px solid var(--border);
+    background: var(--coral);
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .input-row button::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+    transform: translateX(-100%);
+    transition: transform 0.4s ease;
+  }
+
+  .input-row button:hover::after {
+    transform: translateX(100%);
+  }
+
+  .input-row button:hover {
+    background: #ff3b38;
+    box-shadow: 0 4px 16px rgba(255,94,91,0.25);
+  }
+
+  .input-row button:active {
+    transform: scale(0.98);
+  }
+
+  .input-row button:disabled {
+    background: var(--ink-faint);
+    border-left-color: transparent;
+    color: rgba(255,255,255,0.5);
+    cursor: not-allowed;
+  }
+
+  /* Progress */
+  #progress {
+    padding: 0 40px 16px;
+    display: none;
+  }
+
+  #progress.visible { display: block; }
+
+  .progress-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+
+  .progress-list li {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-dim);
+    transition: color 0.3s;
+    padding: 3px 0;
+  }
+
+  .progress-list li .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .progress-list li .dot.running {
+    background: var(--sunflower);
+    box-shadow: 0 0 6px rgba(247,183,49,0.6);
+    animation: pulse 0.6s infinite;
+  }
+
+  .progress-list li .dot.done {
+    background: var(--ink-faint);
+  }
+
+  .progress-list li .dot.found {
+    background: var(--mint);
+    box-shadow: 0 0 8px rgba(32,191,107,0.4);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.15; transform: scale(2); }
+  }
+
+  /* Result */
+  #result {
+    padding: 0 40px 24px;
+    display: none;
+    animation: resultIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  #result.visible { display: block; }
+
+  @keyframes resultIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .result-box {
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 18px 22px;
+    margin-bottom: 14px;
+    position: relative;
+    background: #fefefb;
+  }
+
+  .result-box::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    border-radius: 0 2px 2px 0;
+    transition: background 0.3s;
+  }
+
+  .result-box.success {
+    background: #fafff6;
+    border-color: #b8e6cc;
+  }
+
+  .result-box.success::before {
+    background: var(--mint);
+    box-shadow: 0 0 10px rgba(32,191,107,0.2);
+  }
+
+  .result-box.fail {
+    background: #fffafa;
+    border-color: #fcc;
+  }
+
+  .result-box.fail::before {
+    background: var(--coral);
+    box-shadow: 0 0 10px rgba(255,94,91,0.15);
+  }
+
+  .result-label {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--ink-dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .result-expr {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.8;
+    word-break: break-all;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  .result-box.success .result-expr {
+    color: #1a6b3c;
+  }
+
+  .result-meta {
+    display: flex;
+    gap: 28px;
+    font-size: 13px;
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    flex-wrap: wrap;
+  }
+
+  .result-meta span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .result-meta strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  /* Footer hint */
+  .card-footer {
+    padding: 18px 40px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.01);
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--ink-faint);
+    line-height: 1.8;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+
+  .hint .op {
+    color: var(--coral);
+    font-family: var(--font-mono);
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  footer {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-top: 24px;
+    letter-spacing: 0.05em;
+    font-weight: 400;
+  }
+
+  /* ============ Responsive ============ */
+  @media (max-width: 640px) {
+    body { padding: 16px 10px; }
+    .card-header { padding: 28px 24px 20px; }
+    .card-header::after { left: 24px; }
+    h1 { font-size: 32px; }
+    .digit-badges { padding: 20px 24px; gap: 0; }
+    .digit-badge { width: 46px; height: 56px; font-size: 30px; }
+    .input-section { padding: 16px 24px 18px; }
+    .input-row input { font-size: 18px; padding: 13px 16px; }
+    .input-row button { padding: 13px 20px; font-size: 14px; }
+    #progress { padding: 0 24px 10px; }
+    #result { padding: 0 24px 20px; }
+    .card-footer { padding: 14px 24px; }
+    .result-expr { font-size: 15px; }
+    .result-meta { flex-direction: column; gap: 5px; }
+  }
+
+  @media (max-width: 400px) {
+    h1 { font-size: 26px; }
+    .digit-badge { width: 38px; height: 50px; font-size: 26px; margin: 0; }
+    .input-row input { font-size: 16px; padding: 11px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Background floating math glyphs -->
+<div class="bg-glyphs" aria-hidden="true">
+  <span class="bg-glyph">(</span>
+  <span class="bg-glyph">×</span>
+  <span class="bg-glyph">325</span>
+  <span class="bg-glyph">÷</span>
+  <span class="bg-glyph">+</span>
+  <span class="bg-glyph">−</span>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <h1><span class="accent">325</span> 数字拼图</h1>
+    <p class="subtitle">用 3 → 2 → 5 的循环，拼出任意数字</p>
+  </div>
+
+  <div class="digit-badges" id="digitBadges">
+    <span class="digit-badge d3"><span>3</span></span>
+    <span class="digit-badge d2"><span>2</span></span>
+    <span class="digit-badge d5"><span>5</span></span>
+  </div>
+
+  <div class="input-section">
+    <div class="input-row">
+      <input type="text" id="targetInput" placeholder="输入目标数字，如 4290" autofocus>
+      <button id="calcBtn">计算</button>
+    </div>
+  </div>
+
+  <div id="progress">
+    <ul class="progress-list" id="progressList"></ul>
+  </div>
+
+  <div id="result">
+    <div class="result-box" id="resultBox">
+      <div class="result-label" id="resultLabel">表达式</div>
+      <div class="result-expr" id="resultExpr"></div>
+    </div>
+    <div class="result-meta" id="resultMeta"></div>
+  </div>
+
+  <div class="card-footer">
+    <p class="hint">
+      每个完整的 <span class="op">3</span> → <span class="op">2</span> → <span class="op">5</span> 循环为一组，
+      可使用 <span class="op">+</span> <span class="op">−</span> <span class="op">×</span> <span class="op">÷</span> 和括号。
+      最多尝试 <span class="op">6</span> 组（18 个数字），运算可能需要数秒。
+    </p>
+  </div>
+</div>
+
+<footer>325 Puzzle · MMXXVI</footer>
+
+<script>
+// ═══════════════════════════════════════════
+// Fraction class — exact BigInt arithmetic
+// ═══════════════════════════════════════════
+class Fraction {
+  constructor(num, den) {
+    if (typeof num === 'bigint' && typeof den === 'bigint') {
+      if (den < 0n) { num = -num; den = -den; }
+      const g = gcd(num < 0n ? -num : num, den);
+      this.num = num / g;
+      this.den = den / g;
+    } else if (typeof num === 'bigint' && den === undefined) {
+      this.num = num;
+      this.den = 1n;
+    } else {
+      const n = BigInt(num);
+      const d = den ? BigInt(den) : 1n;
+      const f = new Fraction(n, d);
+      this.num = f.num;
+      this.den = f.den;
+    }
+  }
+
+  add(other)   { return new Fraction(this.num * other.den + other.num * this.den, this.den * other.den); }
+  sub(other)   { return new Fraction(this.num * other.den - other.num * this.den, this.den * other.den); }
+  mul(other)   { return new Fraction(this.num * other.num, this.den * other.den); }
+  div(other)   { return new Fraction(this.num * other.den, this.den * other.num); }
+  neg()        { return new Fraction(-this.num, this.den); }
+
+  equals(other) { return this.num === other.num && this.den === other.den; }
+
+  toString() {
+    if (this.den === 1n) return String(this.num);
+    return this.num + '/' + this.den;
+  }
+
+  isInteger() { return this.den === 1n; }
+
+  abs() { return new Fraction(this.num < 0n ? -this.num : this.num, this.den); }
+
+  complexity() {
+    const n = this.num < 0n ? -this.num : this.num;
+    return n + this.den;
+  }
+
+  toNumber() { return Number(this.num) / Number(this.den); }
+}
+
+function gcd(a, b) {
+  while (b !== 0n) { const t = b; b = a % b; a = t; }
+  return a;
+}
+
+// Constants
+const INT_3 = new Fraction(3n);
+const INT_2 = new Fraction(2n);
+const INT_5 = new Fraction(5n);
+const INT_32 = new Fraction(32n);
+const INT_25 = new Fraction(25n);
+const INT_325 = new Fraction(325n);
+
+// ═══════════════════════════════════════════
+// Expression helpers
+// ═══════════════════════════════════════════
+function prec(op) {
+  if (op === '+' || op === '-') return 1;
+  if (op === '×' || op === '÷') return 2;
+  return 0;
+}
+
+function needsLeftParen(leftOp, curOp) {
+  const lp = leftOp ? prec(leftOp) : 0;
+  const cp = prec(curOp);
+  return lp > 0 && lp < cp;
+}
+
+function needsRightParen(rightOp, curOp) {
+  const rp = rightOp ? prec(rightOp) : 0;
+  const cp = prec(curOp);
+  if (rp === 0) return false;
+  if (rp < cp) return true;
+  if (rp === cp && (curOp === '-' || curOp === '÷')) return true;
+  return false;
+}
+
+function formatExpr(leftStr, leftOp, rightStr, rightOp, curOp) {
+  let l = leftStr;
+  let r = rightStr;
+  if (needsLeftParen(leftOp, curOp)) l = '(' + l + ')';
+  if (needsRightParen(rightOp, curOp)) r = '(' + r + ')';
+  return l + curOp + r;
+}
+
+// ═══════════════════════════════════════════
+// DP Solver
+// ═══════════════════════════════════════════
+const MAX_VALUES_TOTAL = 5000;
+const PER_BUCKET_SMALL = 400;
+const PER_BUCKET_LARGE = Infinity;
+const SPLIT_PER_BUCKET = 200;
+const SMALL_SIDE = 50;
+
+function getBucket(v) {
+  if (v.num === 0n) return 0;
+  const n = v.num < 0n ? -v.num : v.num;
+  const d = v.den;
+  if (n < d) return 1;
+  if (n < 10n * d) return 2;
+  if (n < 100n * d) return 3;
+  if (n < 1000n * d) return 4;
+  if (n < 10000n * d) return 5;
+  if (n < 100000n * d) return 6;
+  return 7;
+}
+
+function getBucketLimit(b) {
+  return b >= 5 ? PER_BUCKET_LARGE : PER_BUCKET_SMALL;
+}
+
+function prune(map, preserveKey) {
+  if (map.size <= MAX_VALUES_TOTAL) return map;
+
+  const buckets = new Map();
+  for (const entry of map.values()) {
+    const b = getBucket(entry.value);
+    if (!buckets.has(b)) buckets.set(b, []);
+    buckets.get(b).push(entry);
+  }
+
+  const kept = [];
+
+  for (const [b, entries] of buckets) {
+    entries.sort((a, b) => a.value.complexity() < b.value.complexity() ? -1 : 1);
+    const limit = getBucketLimit(b);
+    const take = Math.min(limit, entries.length);
+    for (let i = 0; i < take; i++) kept.push(entries[i]);
+  }
+
+  let pinnedEntry = null;
+  if (preserveKey && map.has(preserveKey)) {
+    pinnedEntry = map.get(preserveKey);
+  }
+
+  if (kept.length < MAX_VALUES_TOTAL) {
+    const keptSet = new Set(kept.map(e => e.value.toString()));
+    const remaining = Array.from(map.values()).filter(e => !keptSet.has(e.value.toString()));
+    remaining.sort((a, b) => a.value.complexity() < b.value.complexity() ? -1 : 1);
+    const extra = Math.min(MAX_VALUES_TOTAL - kept.length, remaining.length);
+    for (let i = 0; i < extra; i++) kept.push(remaining[i]);
+  }
+
+  if (kept.length > MAX_VALUES_TOTAL) {
+    kept.sort((a, b) => a.value.complexity() < b.value.complexity() ? -1 : 1);
+    kept.length = MAX_VALUES_TOTAL;
+  }
+
+  if (pinnedEntry) kept.push(pinnedEntry);
+
+  const result = new Map();
+  for (const entry of kept) result.set(entry.value.toString(), entry);
+  return result;
+}
+
+function pickDiverse(map, perBucket) {
+  if (map.size <= perBucket * 8) return Array.from(map.values());
+  const buckets = new Map();
+  for (const e of map.values()) {
+    const b = getBucket(e.value);
+    if (!buckets.has(b)) buckets.set(b, []);
+    buckets.get(b).push(e);
+  }
+  const result = [];
+  for (const [, entries] of buckets) {
+    entries.sort((a, b) => a.value.complexity() < b.value.complexity() ? -1 : 1);
+    const take = Math.min(perBucket, entries.length);
+    for (let i = 0; i < take; i++) result.push(entries[i]);
+  }
+  return result;
+}
+
+let TARGET_KEY = '';
+
+function solveForGroups(N) {
+  const len = 3 * N;
+  const digitsVal = new Array(len);
+  const digitStr = new Array(len);
+  for (let i = 0; i < N; i++) {
+    const base = i * 3;
+    digitsVal[base] = INT_3;   digitStr[base] = '3';
+    digitsVal[base + 1] = INT_2; digitStr[base + 1] = '2';
+    digitsVal[base + 2] = INT_5; digitStr[base + 2] = '5';
+  }
+
+  const dp = Array.from({ length: len }, () => new Array(len).fill(null));
+
+  for (let i = 0; i < len; i++) {
+    const m = new Map();
+    const v = digitsVal[i];
+    m.set(v.toString(), { value: v, expr: digitStr[i], topOp: null });
+    dp[i][i] = m;
+  }
+
+  for (let L = 2; L <= len; L++) {
+    for (let i = 0; i + L - 1 < len; i++) {
+      const j = i + L - 1;
+      const m = new Map();
+
+      for (let k = i; k < j; k++) {
+        const leftMap = dp[i][k];
+        const rightMap = dp[k + 1][j];
+        if (!leftMap || !rightMap) continue;
+
+        const leftEntries = (leftMap.size <= SMALL_SIDE || rightMap.size <= SMALL_SIDE)
+          ? Array.from(leftMap.values())
+          : pickDiverse(leftMap, SPLIT_PER_BUCKET);
+        const rightEntries = (leftMap.size <= SMALL_SIDE || rightMap.size <= SMALL_SIDE)
+          ? Array.from(rightMap.values())
+          : pickDiverse(rightMap, SPLIT_PER_BUCKET);
+
+        for (const leftEntry of leftEntries) {
+          for (const rightEntry of rightEntries) {
+            const lv = leftEntry.value;
+            const rv = rightEntry.value;
+
+            const addVal = lv.add(rv);
+            const addKey = addVal.toString();
+            if (!m.has(addKey)) {
+              m.set(addKey, {
+                value: addVal,
+                expr: formatExpr(leftEntry.expr, leftEntry.topOp, rightEntry.expr, rightEntry.topOp, '+'),
+                topOp: '+'
+              });
+            }
+
+            const subVal = lv.sub(rv);
+            const subKey = subVal.toString();
+            if (!m.has(subKey)) {
+              m.set(subKey, {
+                value: subVal,
+                expr: formatExpr(leftEntry.expr, leftEntry.topOp, rightEntry.expr, rightEntry.topOp, '-'),
+                topOp: '-'
+              });
+            }
+
+            const mulVal = lv.mul(rv);
+            const mulKey = mulVal.toString();
+            if (!m.has(mulKey)) {
+              m.set(mulKey, {
+                value: mulVal,
+                expr: formatExpr(leftEntry.expr, leftEntry.topOp, rightEntry.expr, rightEntry.topOp, '×'),
+                topOp: '×'
+              });
+            }
+
+            if (rv.num !== 0n) {
+              const divVal = lv.div(rv);
+              const divKey = divVal.toString();
+              if (!m.has(divKey)) {
+                m.set(divKey, {
+                  value: divVal,
+                  expr: formatExpr(leftEntry.expr, leftEntry.topOp, rightEntry.expr, rightEntry.topOp, '÷'),
+                  topOp: '÷'
+                });
+              }
+            }
+          }
+        }
+      }
+
+      if (Math.floor(i / 3) === Math.floor(j / 3)) {
+        const gBase = Math.floor(i / 3) * 3;
+        if (L === 2) {
+          if (i === gBase && j === gBase + 1) {
+            m.set('32', { value: INT_32, expr: '32', topOp: null });
+          } else if (i === gBase + 1 && j === gBase + 2) {
+            m.set('25', { value: INT_25, expr: '25', topOp: null });
+          }
+        } else if (L === 3 && i === gBase && j === gBase + 2) {
+          m.set('325', { value: INT_325, expr: '325', topOp: null });
+        }
+      }
+
+      dp[i][j] = prune(m, TARGET_KEY);
+    }
+  }
+
+  return dp[0][len - 1];
+}
+
+// ═══════════════════════════════════════════
+// Main solver
+// ═══════════════════════════════════════════
+const MAX_GROUPS = 6;
+
+async function solve(target) {
+  const targetFrac = new Fraction(target);
+  TARGET_KEY = targetFrac.toString();
+
+  for (let N = 1; N <= MAX_GROUPS; N++) {
+    updateProgress(N, 'running');
+    await sleep(20);
+
+    const startTime = performance.now();
+    const reachable = solveForGroups(N);
+    const elapsed = Math.round(performance.now() - startTime);
+
+    if (reachable.has(TARGET_KEY)) {
+      const entry = reachable.get(TARGET_KEY);
+      updateProgress(N, 'found');
+      return { groups: N, expression: entry.expr, value: entry.value, elapsed };
+    } else {
+      updateProgress(N, 'done');
+    }
+  }
+
+  return null;
+}
+
+// ═══════════════════════════════════════════
+// UI
+// ═══════════════════════════════════════════
+const targetInput = document.getElementById('targetInput');
+const calcBtn = document.getElementById('calcBtn');
+const progressDiv = document.getElementById('progress');
+const progressList = document.getElementById('progressList');
+const resultDiv = document.getElementById('result');
+const resultBox = document.getElementById('resultBox');
+const resultLabel = document.getElementById('resultLabel');
+const resultExpr = document.getElementById('resultExpr');
+const resultMeta = document.getElementById('resultMeta');
+
+function updateProgress(N, state) {
+  progressDiv.classList.add('visible');
+  let li = document.getElementById('prog-' + N);
+  if (!li) {
+    li = document.createElement('li');
+    li.id = 'prog-' + N;
+    progressList.appendChild(li);
+  }
+  const dots = { running: '●', done: '○', found: '●' };
+  const cls = { running: 'running', done: 'done', found: 'found' };
+  const labels = { running: `正在尝试 ${N} 组 (${N*3} 个数字)...`, done: `${N} 组完成，未找到`, found: `${N} 组完成，找到解！` };
+  li.innerHTML = `<span class="dot ${cls[state]}">${dots[state]}</span> ${labels[state]}`;
+}
+
+function showResult(entry) {
+  resultDiv.classList.add('visible');
+  resultBox.className = 'result-box success';
+  resultLabel.textContent = '表达式';
+  resultExpr.textContent = entry.expression;
+  resultMeta.innerHTML = `
+    <span>使用组数: <strong>${entry.groups} 组</strong></span>
+    <span>计算结果: <strong>${entry.value.toString()}</strong></span>
+    <span>耗时: <strong>${entry.elapsed}ms</strong></span>
+  `;
+  updateBadges(entry.groups);
+}
+
+function showFail() {
+  resultDiv.classList.add('visible');
+  resultBox.className = 'result-box fail';
+  resultLabel.textContent = '无法构成';
+  resultExpr.textContent = `在 ${MAX_GROUPS} 组（${MAX_GROUPS*3} 个数字）范围内，无法通过四则运算拼出该数字。`;
+  resultMeta.innerHTML = '';
+  updateBadges(0);
+}
+
+function updateBadges(groups) {
+  const container = document.getElementById('digitBadges');
+  let html = '';
+  for (let g = 0; g < MAX_GROUPS; g++) {
+    const fade = groups > 0 && g >= groups ? ' faded' : '';
+    html += `<span class="digit-badge d3${fade}"><span>3</span></span>`;
+    html += `<span class="digit-badge d2${fade}"><span>2</span></span>`;
+    html += `<span class="digit-badge d5${fade}"><span>5</span></span>`;
+  }
+  container.innerHTML = html;
+}
+
+function setUIState(state) {
+  switch (state) {
+    case 'computing':
+      targetInput.disabled = true;
+      calcBtn.disabled = true;
+      calcBtn.textContent = '计算中';
+      progressDiv.classList.add('visible');
+      progressList.innerHTML = '';
+      resultDiv.classList.remove('visible');
+      updateBadges(0);
+      break;
+    case 'idle':
+      targetInput.disabled = false;
+      calcBtn.disabled = false;
+      calcBtn.textContent = '计算';
+      break;
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function handleCalculate() {
+  const raw = targetInput.value.trim();
+  if (!raw) {
+    resultDiv.classList.add('visible');
+    resultBox.className = 'result-box fail';
+    resultLabel.textContent = '提示';
+    resultExpr.textContent = '请输入目标数字。';
+    resultMeta.innerHTML = '';
+    return;
+  }
+
+  const cleaned = raw.replace(/,/g, '');
+  const n = Number(cleaned);
+  if (!Number.isFinite(n) || !Number.isInteger(n) || cleaned.includes('.')) {
+    resultDiv.classList.add('visible');
+    resultBox.className = 'result-box fail';
+    resultLabel.textContent = '提示';
+    resultExpr.textContent = '请输入一个有效的整数（支持负数）。';
+    resultMeta.innerHTML = '';
+    return;
+  }
+
+  if (n > 1e12 || n < -1e12) {
+    resultDiv.classList.add('visible');
+    resultBox.className = 'result-box fail';
+    resultLabel.textContent = '提示';
+    resultExpr.textContent = '数字过大，计算可能非常耗时。请尝试较小的目标（建议 |n| ≤ 10¹²）。';
+    resultMeta.innerHTML = '';
+    return;
+  }
+
+  setUIState('computing');
+
+  try {
+    const result = await solve(BigInt(n));
+    if (result) {
+      showResult(result);
+    } else {
+      showFail();
+    }
+  } catch (e) {
+    resultDiv.classList.add('visible');
+    resultBox.className = 'result-box fail';
+    resultLabel.textContent = '错误';
+    resultExpr.textContent = '计算过程中出现异常：' + e.message;
+    resultMeta.innerHTML = '';
+    console.error(e);
+  } finally {
+    setUIState('idle');
+  }
+}
+
+calcBtn.addEventListener('click', handleCalculate);
+targetInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handleCalculate();
+});
+
+console.log('325 Puzzle ready. Try: 4290');
+updateBadges(0);
+</script>
+</body>
+</html>
